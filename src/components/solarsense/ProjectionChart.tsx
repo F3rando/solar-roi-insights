@@ -40,7 +40,7 @@ export function ProjectionChart({ zone, inputs }: { zone: Zone; inputs: Inputs }
                 borderRadius: 8,
                 fontSize: 12,
               }}
-              formatter={(v: number, name) => [fmtUsd(v), name]}
+              formatter={(v) => [fmtUsd(Number(v)), ""] as [string, string]}
               labelFormatter={(l) => `Year ${l}`}
             />
             <Legend wrapperStyle={{ display: "none" }} />
