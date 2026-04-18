@@ -1,0 +1,8 @@
+{
+  "version": "1",
+  "schema_version": 1,
+  "generated_at": "2026-04-18T12:00:00.000Z",
+  "dataset_note": "Mock metrics for UI/API wiring; replace with ZenPower ETL output.",
+  "summary": "processed/v1/summary.json",
+  "regions": "processed/v1/regions.json"
+}

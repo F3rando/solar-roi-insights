@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Sidebar } from "@/components/solarsense/Sidebar";
 import { MapView } from "@/components/solarsense/MapView";
@@ -8,6 +8,8 @@ import { WhatIfPanel } from "@/components/solarsense/WhatIfPanel";
 import { EnvROI } from "@/components/solarsense/EnvROI";
 import { SavingsHero } from "@/components/solarsense/SavingsHero";
 import { SAN_DIEGO_ZONES, type Inputs } from "@/lib/solar";
+import { useSolarRegions, useSolarSummary } from "@/hooks/useSolarMetrics";
+import { useLambdaApi } from "@/lib/api";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -38,10 +40,20 @@ function Index() {
     utilityIncreasePct: 4.2,
   });
 
+  const { data: summary, isLoading: summaryLoading, isError: summaryError } = useSolarSummary();
+  const { data: regionsPayload, isLoading: regionsLoading, isError: regionsError } = useSolarRegions();
+  const viaApi = useLambdaApi();
+
   const zone = useMemo(
     () => SAN_DIEGO_ZONES.find((z) => z.id === selectedId) ?? SAN_DIEGO_ZONES[0],
     [selectedId],
   );
+
+  const apiRegion = useMemo(() => {
+    const list = regionsPayload?.regions;
+    if (!list?.length) return null;
+    return list.find((r) => r.id === selectedId) ?? null;
+  }, [regionsPayload, selectedId]);
 
   return (
     <div className="dark min-h-screen flex bg-background text-foreground">
@@ -49,17 +61,26 @@ function Index() {
 
       <main className="flex-1 min-w-0 p-4 md:p-6 flex flex-col gap-4">
         {/* Header */}
-        <header className="flex items-center justify-between">
+        <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-primary">SolarSense</div>
             <h1 className="text-2xl font-bold mt-0.5">
               Decision Intelligence for <span className="gradient-text">Solar ROI</span>
             </h1>
+            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+              <Link to="/methodology" className="text-primary hover:underline">
+                Methodology
+              </Link>
+              <span>
+                Data: {viaApi ? "API (Lambda)" : "static /processed/v1"}
+              </span>
+            </div>
           </div>
-          <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground">
-            <span className="size-2 rounded-full bg-solar animate-pulse" />
-            Live · Scripps + EIA feeds
-          </div>
+          <SummaryKpis
+            summary={summary}
+            loading={summaryLoading}
+            error={summaryError}
+          />
         </header>
 
         {/* Top: Map + Insight */}
@@ -71,7 +92,12 @@ function Index() {
             layer={layer}
             onLayerChange={setLayer}
           />
-          <InsightPanel zone={zone} inputs={inputs} />
+          <InsightPanel
+            zone={zone}
+            inputs={inputs}
+            apiRegion={apiRegion}
+            datasetMedianPaybackYears={summary?.kpis.median_payback_years ?? null}
+          />
         </section>
 
         {/* Bottom bento */}
@@ -85,7 +111,11 @@ function Index() {
             <WhatIfPanel inputs={inputs} onChange={setInputs} />
           </div>
           <div className="lg:col-start-4 lg:row-start-2">
-            <DataFeedCard />
+            <DataFeedCard
+              viaApi={viaApi}
+              regionsLoading={regionsLoading}
+              regionsError={regionsError}
+            />
           </div>
         </section>
       </main>
@@ -93,20 +123,74 @@ function Index() {
   );
 }
 
-function DataFeedCard() {
+function SummaryKpis({
+  summary,
+  loading,
+  error,
+}: {
+  summary: ReturnType<typeof useSolarSummary>["data"];
+  loading: boolean;
+  error: boolean;
+}) {
+  if (loading) {
+    return (
+      <div className="rounded-xl border border-border bg-card/50 px-4 py-3 text-xs text-muted-foreground">
+        Loading metrics…
+      </div>
+    );
+  }
+  if (error || !summary) {
+    return (
+      <div className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-xs text-destructive">
+        Could not load summary.json — check API URL or static files.
+      </div>
+    );
+  }
+  const k = summary.kpis;
+  return (
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4 text-left">
+      <Kpi label="Installs (est.)" value={k.total_estimated_installs.toLocaleString()} />
+      <Kpi label="Capacity" value={`${k.total_capacity_mw.toFixed(1)} MW`} />
+      <Kpi label="YoY growth" value={`+${k.yoy_growth_pct.toFixed(1)}%`} />
+      <Kpi label="CO₂ avoided" value={`${k.est_co2_avoided_kt_per_year.toFixed(0)} kt/yr`} />
+    </div>
+  );
+}
+
+function Kpi({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-border bg-card/60 px-3 py-2">
+      <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className="text-sm font-semibold tabular-nums">{value}</div>
+    </div>
+  );
+}
+
+function DataFeedCard({
+  viaApi,
+  regionsLoading,
+  regionsError,
+}: {
+  viaApi: boolean;
+  regionsLoading: boolean;
+  regionsError: boolean;
+}) {
+  const metricsStatus = regionsError ? "Error" : regionsLoading ? "Loading" : "Ready";
+  const metricsTone = regionsError ? "text-destructive" : regionsLoading ? "text-warn" : "text-solar";
   const rows = [
-    { src: "Scripps Heat Map", status: "Connected", tone: "text-solar" },
-    { src: "EIA Energy API", status: "Mock", tone: "text-warn" },
-    { src: "Google Maps", status: "Placeholder", tone: "text-muted-foreground" },
+    { src: "Processed metrics (v1)", status: metricsStatus, tone: metricsTone },
+    { src: viaApi ? "API Gateway + Lambda" : "Static /public/processed", status: viaApi ? "API" : "Local", tone: "text-solar" },
+    { src: "Scripps Heat Map", status: "Model", tone: "text-warn" },
+    { src: "EIA Energy API", status: "Model", tone: "text-warn" },
   ];
   return (
     <div className="panel p-5 h-full">
       <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground">Data Feeds</div>
       <ul className="mt-3 space-y-2 text-sm">
         {rows.map((r) => (
-          <li key={r.src} className="flex items-center justify-between">
+          <li key={r.src} className="flex items-center justify-between gap-2">
             <span className="text-foreground/80">{r.src}</span>
-            <span className={`text-xs font-mono uppercase tracking-wider ${r.tone}`}>{r.status}</span>
+            <span className={`text-xs font-mono uppercase tracking-wider shrink-0 ${r.tone}`}>{r.status}</span>
           </li>
         ))}
       </ul>

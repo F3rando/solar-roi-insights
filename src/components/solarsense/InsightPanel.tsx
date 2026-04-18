@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { FileDown } from "lucide-react";
 import type { Zone, Inputs } from "@/lib/solar";
+import type { RegionRowV1 } from "@/types/api";
 import {
   efficiencyPct,
   paybackYears,
@@ -8,11 +9,21 @@ import {
   fmtUsd,
 } from "@/lib/solar";
 
-export function InsightPanel({ zone, inputs }: { zone: Zone; inputs: Inputs }) {
+export function InsightPanel({
+  zone,
+  inputs,
+  apiRegion,
+  datasetMedianPaybackYears,
+}: {
+  zone: Zone;
+  inputs: Inputs;
+  apiRegion?: RegionRowV1 | null;
+  datasetMedianPaybackYears?: number | null;
+}) {
   const eff = efficiencyPct(zone.heatC);
   const payback = paybackYears(zone, inputs);
   const savings = cumulativeSavings(zone, inputs);
-  const regionAvg = 7.2;
+  const regionAvg = datasetMedianPaybackYears ?? 7.2;
 
   return (
     <motion.aside
@@ -52,6 +63,25 @@ export function InsightPanel({ zone, inputs }: { zone: Zone; inputs: Inputs }) {
           <div className="text-xs text-solar">+{inputs.utilityIncreasePct.toFixed(1)}% / yr</div>
         </div>
       </Card>
+
+      {apiRegion && (
+        <Card label="Dataset snapshot (ZenPower pipeline)">
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            <div>
+              <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Adoption index</div>
+              <div className="text-lg font-semibold">{(apiRegion.adoption_index * 100).toFixed(0)}%</div>
+            </div>
+            <div>
+              <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">YoY growth</div>
+              <div className="text-lg font-semibold text-solar">+{apiRegion.yoy_growth_pct.toFixed(1)}%</div>
+            </div>
+            <div className="col-span-2 text-xs text-muted-foreground">
+              Est. median savings / yr: ${apiRegion.median_est_annual_savings_usd.toLocaleString()} · bucket:{" "}
+              {apiRegion.install_count_bucket}
+            </div>
+          </div>
+        </Card>
+      )}
 
       <button className="mt-2 w-full rounded-xl py-3 font-semibold text-primary-foreground bg-primary hover:opacity-90 transition glow-primary flex items-center justify-center gap-2">
         <FileDown className="size-4" />

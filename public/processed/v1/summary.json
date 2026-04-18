@@ -1,0 +1,18 @@
+{
+  "scope": {
+    "label": "San Diego County (mock)",
+    "geo_level": "placeholder_zones"
+  },
+  "kpis": {
+    "total_estimated_installs": 128400,
+    "total_capacity_mw": 892.4,
+    "median_payback_years": 8.2,
+    "est_co2_avoided_kt_per_year": 412.7,
+    "yoy_growth_pct": 14.3
+  },
+  "coverage": {
+    "regions_count": 8,
+    "last_data_year": 2024
+  },
+  "disclaimer": "Illustrative numbers for development. Methodology TBD on /methodology."
+}
