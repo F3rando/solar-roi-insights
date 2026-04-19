@@ -9,7 +9,7 @@ export function WhatIfPanel({
   onChange: (next: Inputs) => void;
 }) {
   return (
-    <div className="panel p-5 space-y-5">
+    <div className="panel p-5 pb-15 space-y-5">
       <div>
         <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground">What-If Scenario</div>
         <div className="text-sm mt-1">Tune your install to see live ROI</div>
