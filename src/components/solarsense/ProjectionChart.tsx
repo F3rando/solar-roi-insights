@@ -1,9 +1,18 @@
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from "recharts";
 import type { Zone, Inputs } from "@/lib/solar";
+import type { SolarInsightsV1 } from "@/types/api";
 import { projectedSavings, fmtUsd } from "@/lib/solar";
 
-export function ProjectionChart({ zone, inputs }: { zone: Zone; inputs: Inputs }) {
-  const data = projectedSavings(zone, inputs, 25);
+export function ProjectionChart({
+  zone,
+  inputs,
+  solarInsights,
+}: {
+  zone: Zone;
+  inputs: Inputs;
+  solarInsights?: SolarInsightsV1 | null;
+}) {
+  const data = projectedSavings(zone, inputs, 25, solarInsights);
 
   return (
     <div className="panel p-5 h-full flex flex-col">
@@ -11,6 +20,10 @@ export function ProjectionChart({ zone, inputs }: { zone: Zone; inputs: Inputs }
         <div>
           <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground">25-Year Cost Projection</div>
           <div className="text-sm text-foreground/80 mt-1">Cumulative spend: solar vs grid</div>
+          <div className="text-[10px] text-muted-foreground mt-1 max-w-[280px] leading-snug">
+            Model uses your sliders + zone rates; production scales to{" "}
+            <span className="text-foreground/90">Google Solar max sunshine hours</span> when the dataset includes them.
+          </div>
         </div>
         <div className="flex gap-3 text-xs">
           <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-primary" /> Solar</span>

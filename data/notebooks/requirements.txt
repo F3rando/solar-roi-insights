@@ -1,0 +1,2 @@
+# pip install -r requirements.txt (from data/notebooks or repo root with -r path)
+pandas>=2.0,<3

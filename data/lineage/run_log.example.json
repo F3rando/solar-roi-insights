@@ -1,0 +1,18 @@
+{
+  "$schema_comment": "Copy to run_log.json and append entries. Optional audit trail for judges / reproducibility.",
+  "runs": [
+    {
+      "run_id": "2026-04-19-example",
+      "generated_at": "2026-04-19T12:00:00.000Z",
+      "notebook_or_script": "data/notebooks/01_aggregate.ipynb",
+      "raw_inputs": ["data/raw/2026-04-18_zenpower_sample.csv"],
+      "outputs_written": [
+        "public/processed/v1/manifest.json",
+        "public/processed/v1/summary.json",
+        "public/processed/v1/regions.json"
+      ],
+      "schema_version": 1,
+      "notes": "Replace with real methodology."
+    }
+  ]
+}
