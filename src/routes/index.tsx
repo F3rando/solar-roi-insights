@@ -10,6 +10,8 @@ import { SavingsHero } from "@/components/solarsense/SavingsHero";
 import { SAN_DIEGO_ZONES, type Inputs } from "@/lib/solar";
 import { useSolarManifest, useSolarRegions, useSolarSummary } from "@/hooks/useSolarMetrics";
 import { useLambdaApi } from "@/lib/api";
+import { MetricFlipCard } from "@/components/solarsense/MetricFlipCard";
+import type { MetricGlossaryKey } from "@/content/metricGlossary";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -151,20 +153,34 @@ function SummaryKpis({
   const k = summary.kpis;
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4 text-left">
-      <Kpi label="Installs (est.)" value={k.total_estimated_installs.toLocaleString()} />
-      <Kpi label="Capacity" value={`${k.total_capacity_mw.toFixed(1)} MW`} />
-      <Kpi label="YoY growth" value={`+${k.yoy_growth_pct.toFixed(1)}%`} />
-      <Kpi label="CO₂ avoided" value={`${k.est_co2_avoided_kt_per_year.toFixed(0)} kt/yr`} />
+      <Kpi
+        label="Installs (est.)"
+        value={k.total_estimated_installs.toLocaleString()}
+        glossaryKey="kpi-installs-est"
+      />
+      <Kpi label="Capacity" value={`${k.total_capacity_mw.toFixed(1)} MW`} glossaryKey="kpi-capacity-mw" />
+      <Kpi label="YoY growth" value={`+${k.yoy_growth_pct.toFixed(1)}%`} glossaryKey="kpi-yoy-growth" />
+      <Kpi
+        label="CO₂ avoided"
+        value={`${k.est_co2_avoided_kt_per_year.toFixed(0)} kt/yr`}
+        glossaryKey="kpi-co2-summary"
+      />
     </div>
   );
 }
 
-function Kpi({ label, value }: { label: string; value: string }) {
+function Kpi({ label, value, glossaryKey }: { label: string; value: string; glossaryKey: MetricGlossaryKey }) {
   return (
-    <div className="rounded-xl border border-border bg-card/60 px-3 py-2">
-      <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className="text-sm font-semibold tabular-nums">{value}</div>
-    </div>
+    <MetricFlipCard
+      metricKey={glossaryKey}
+      className="rounded-xl border border-border bg-card/60 px-3 py-2"
+      front={
+        <>
+          <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">{label}</div>
+          <div className="text-sm font-semibold tabular-nums">{value}</div>
+        </>
+      }
+    />
   );
 }
 

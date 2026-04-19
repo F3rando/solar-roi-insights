@@ -118,6 +118,14 @@
 
 @layer base {
   * { border-color: var(--color-border); }
+  /* Hide scrollbars site-wide; scrolling still works (wheel / trackpad / touch). */
+  * {
+    scrollbar-width: none;
+  }
+  *::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
   html, body { background-color: var(--color-background); color: var(--color-foreground); }
   body {
     font-family: var(--font-display);
