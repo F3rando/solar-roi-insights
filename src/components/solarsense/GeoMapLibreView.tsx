@@ -1,7 +1,7 @@
 import { bbox } from "@turf/turf";
 import type { FeatureCollection } from "geojson";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Map as MlMap } from "maplibre-gl";
+import type { GeoJSONSource, Map as MlMap } from "maplibre-gl";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
@@ -25,20 +25,16 @@ const MAX_BOUNDS: [[number, number], [number, number]] = [
   [-116.02, 33.56],
 ];
 
-/** Insert custom layers before the first symbol — fine as a first pass (MapTiler interleaves lines/symbols). */
-function firstSymbolLayerId(map: MlMap): string | undefined {
-  const layers = map.getStyle().layers;
-  if (!layers) return undefined;
-  for (const layer of layers) {
-    if (layer.type === "symbol") return layer.id;
-  }
-  return undefined;
-}
+type SolarMapData = {
+  zones: Zone[];
+  inputs: Inputs;
+  rowById: Map<string, RegionRowV1>;
+  selectedId: string;
+};
 
 /**
- * Pull our layers to the **absolute top** of the stack in order (MapTiler `styledata` / terrain / tiles
- * can inject road & label layers above a “before pins” anchor — heat then vanishes under the basemap).
- * `moveLayer(id)` with no `beforeId` = top; doing county → fill → outline → pins keeps pins above the heat.
+ * Append-only layer order: each `addLayer` without `beforeId` goes to the **top** of the stack.
+ * MapTiler keeps appending layers as tiles/fonts/terrain settle — `moveLayer(id)` pulls ours back up.
  */
 const SOLAR_LAYER_STACK: readonly string[] = [
   "county-outline-line",
@@ -53,25 +49,133 @@ function stackSolarLayersOnTop(map: MlMap) {
       if (map.getLayer(id)) map.moveLayer(id);
     }
   } catch {
-    /* style swap / hot reload */
+    /* noop */
   }
 }
 
-/** Cold refresh + MapTiler keep injecting layers for seconds — restack on a short schedule. */
-const STACK_BURST_MS = [0, 32, 100, 280, 700, 1600, 4000];
+const STACK_BURST_MS = [0, 50, 150, 400, 1000, 2500, 5000];
 
 function scheduleStackBursts(map: MlMap, isAbort: () => boolean): () => void {
   const timers: number[] = [];
   for (const ms of STACK_BURST_MS) {
     timers.push(
       window.setTimeout(() => {
-        if (!isAbort()) stackSolarLayersOnTop(map);
+        if (!isAbort()) {
+          stackSolarLayersOnTop(map);
+        }
       }, ms),
     );
   }
   return () => {
     for (const t of timers) window.clearTimeout(t);
   };
+}
+
+/** (Re)create sources + layers if missing — full style diffs can drop custom layers on cold load. */
+function ensureSolarOverlayInstalled(map: MlMap) {
+  if (!map.getSource("county-outline")) {
+    map.addSource("county-outline", {
+      type: "geojson",
+      data: SAN_DIEGO_COUNTY_OUTLINE,
+    });
+  }
+
+  if (!map.getSource("zones")) {
+    map.addSource("zones", {
+      type: "geojson",
+      data: { type: "FeatureCollection", features: [] },
+      promoteId: "zoneId",
+    });
+  }
+
+  if (!map.getSource("pins")) {
+    map.addSource("pins", {
+      type: "geojson",
+      data: { type: "FeatureCollection", features: [] },
+      promoteId: "zoneId",
+    });
+  }
+
+  if (!map.getLayer("county-outline-line")) {
+    map.addLayer({
+      id: "county-outline-line",
+      type: "line",
+      source: "county-outline",
+      paint: {
+        "line-color": "rgba(250,250,252,0.35)",
+        "line-width": 1.65,
+      },
+      layout: {
+        "line-join": "round",
+        "line-cap": "round",
+      },
+    });
+  }
+
+  if (!map.getLayer("zones-fill")) {
+    map.addLayer({
+      id: "zones-fill",
+      type: "fill",
+      source: "zones",
+      paint: {
+        "fill-color": ["coalesce", ["to-color", ["get", "fillColor"]], "#3B0F70"],
+        "fill-opacity": [
+          "case",
+          ["boolean", ["feature-state", "hover"], false],
+          ["min", 0.38, ["*", ["+", 0.06, ["*", ["get", "score"], 0.12]], 2.05]],
+          ["+", 0.06, ["*", ["get", "score"], 0.12]],
+        ],
+      },
+    });
+  }
+
+  if (!map.getLayer("zones-outline")) {
+    map.addLayer({
+      id: "zones-outline",
+      type: "line",
+      source: "zones",
+      paint: {
+        "line-color": [
+          "case",
+          ["boolean", ["feature-state", "hover"], false],
+          ["to-color", ["get", "hc"]],
+          ["to-color", ["get", "sc"]],
+        ],
+        "line-width": [
+          "case",
+          ["boolean", ["feature-state", "hover"], false],
+          ["get", "hw"],
+          ["get", "sw"],
+        ],
+        "line-opacity": 1,
+      },
+      layout: {
+        "line-join": "round",
+        "line-cap": "round",
+      },
+    });
+  }
+
+  if (!map.getLayer("pins-circles")) {
+    map.addLayer({
+      id: "pins-circles",
+      type: "circle",
+      source: "pins",
+      paint: {
+        "circle-radius": ["max", 6, ["to-number", ["get", "r"]]],
+        "circle-color": ["coalesce", ["to-color", ["get", "fillColor"]], "#8C2981"],
+        "circle-opacity": [
+          "case",
+          ["boolean", ["feature-state", "hover"], false],
+          0.92,
+          ["to-number", ["get", "fillOpacity"]],
+        ],
+        "circle-stroke-width": ["to-number", ["get", "strokeWidth"]],
+        "circle-stroke-color": ["to-color", ["get", "strokeColor"]],
+        "circle-stroke-opacity": 1,
+      },
+    });
+  }
 }
 
 function enrichLandFc(
@@ -105,6 +209,46 @@ function enrichLandFc(
   };
 }
 
+/** Push Voronoi + pins GeoJSON — call after every style churn so data is never stuck empty. */
+function applySolarDataToMap(map: MlMap, data: SolarMapData) {
+  ensureSolarOverlayInstalled(map);
+
+  const zonesSrc = map.getSource("zones") as GeoJSONSource | undefined;
+  const pinsSrc = map.getSource("pins") as GeoJSONSource | undefined;
+  if (!zonesSrc || !pinsSrc) return;
+
+  const metrics = buildHeatMetrics(data.zones, data.inputs, data.rowById);
+  const vorFc = zoneVoronoiGeoJson(data.zones, data.rowById);
+  const landFc = clipZoneCellsToCountyLand(vorFc, SAN_DIEGO_COUNTY_OUTLINE);
+  const enriched = enrichLandFc(landFc, metrics, data.selectedId);
+
+  zonesSrc.setData(enriched);
+
+  const pinFeatures = data.zones.map((z) => {
+    const row = data.rowById.get(z.id);
+    const m = metrics.get(z.id)!;
+    const { lat, lon } = zoneCentroid(z.id, row?.centroid ?? null);
+    const score = m.combinedScore;
+    const selected = z.id === data.selectedId;
+    const r = Math.min(markerRadiusFromScore(score, selected), 14);
+    return {
+      type: "Feature" as const,
+      geometry: { type: "Point" as const, coordinates: [lon, lat] },
+      properties: {
+        zoneId: z.id,
+        r,
+        fillColor: heatGradientHex(score),
+        strokeColor: selected ? "rgba(255,255,255,0.62)" : "rgba(255,255,255,0.22)",
+        strokeWidth: selected ? 1.75 : 0.85,
+        fillOpacity: 0.52,
+      },
+    };
+  });
+
+  pinsSrc.setData({ type: "FeatureCollection", features: pinFeatures });
+  stackSolarLayersOnTop(map);
+}
+
 export function GeoMapLibreView({
   zones,
   inputs,
@@ -128,6 +272,13 @@ export function GeoMapLibreView({
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
 
+  const solarDataRef = useRef<SolarMapData>({
+    zones,
+    inputs,
+    rowById: new Map(),
+    selectedId,
+  });
+
   const [browser, setBrowser] = useState(false);
   const [mapReady, setMapReady] = useState(false);
 
@@ -139,6 +290,8 @@ export function GeoMapLibreView({
     () => new Map((regionRows ?? []).map((r) => [r.id, r])),
     [regionRows],
   );
+
+  solarDataRef.current = { zones, inputs, rowById, selectedId };
 
   const mapDataRef = useRef({ zones, inputs, rowById });
   mapDataRef.current = { zones, inputs, rowById };
@@ -160,24 +313,36 @@ export function GeoMapLibreView({
     };
 
     let lastIdleStackAt = 0;
+
+    const restackAfterStyleChange = () => {
+      if (destroyed) return;
+      ensureSolarOverlayInstalled(map);
+      applySolarDataToMap(map, solarDataRef.current);
+      stackSolarLayersOnTop(map);
+      requestAnimationFrame(() => {
+        if (!destroyed) {
+          stackSolarLayersOnTop(map);
+          applySolarDataToMap(map, solarDataRef.current);
+        }
+      });
+    };
+
     const scheduleReorderAfterStyleChange = () => {
       if (destroyed) return;
-      stackSolarLayersOnTop(map);
-      requestAnimationFrame(() => stackSolarLayersOnTop(map));
+      restackAfterStyleChange();
       if (styleReorderTimer != null) window.clearTimeout(styleReorderTimer);
       styleReorderTimer = window.setTimeout(() => {
         styleReorderTimer = null;
-        stackSolarLayersOnTop(map);
-        requestAnimationFrame(() => stackSolarLayersOnTop(map));
-      }, 100);
+        if (!destroyed) restackAfterStyleChange();
+      }, 120);
     };
 
     const onIdleRestack = () => {
       if (destroyed) return;
       const now = Date.now();
-      if (now - lastIdleStackAt < 100) return;
+      if (now - lastIdleStackAt < 120) return;
       lastIdleStackAt = now;
-      stackSolarLayersOnTop(map);
+      restackAfterStyleChange();
     };
 
     const map = new maplibregl.Map({
@@ -196,108 +361,6 @@ export function GeoMapLibreView({
     map.on("load", () => {
       if (destroyed) return;
 
-      const beforeId = firstSymbolLayerId(map);
-
-      map.addSource("county-outline", {
-        type: "geojson",
-        data: SAN_DIEGO_COUNTY_OUTLINE,
-      });
-      map.addLayer(
-        {
-          id: "county-outline-line",
-          type: "line",
-          source: "county-outline",
-          paint: {
-            "line-color": "rgba(250,250,252,0.3)",
-            "line-width": 1.65,
-          },
-          layout: {
-            "line-join": "round",
-            "line-cap": "round",
-          },
-        },
-        beforeId,
-      );
-
-      map.addSource("zones", {
-        type: "geojson",
-        data: { type: "FeatureCollection", features: [] },
-        promoteId: "zoneId",
-      });
-
-      map.addLayer(
-        {
-          id: "zones-fill",
-          type: "fill",
-          source: "zones",
-          paint: {
-            "fill-color": ["to-color", ["get", "fillColor"]],
-            /* Matches softened {@link regionFillOpacity} + hover (purple/orange ramp reads without mud). */
-            "fill-opacity": [
-              "case",
-              ["boolean", ["feature-state", "hover"], false],
-              ["min", 0.34, ["*", ["+", 0.04, ["*", ["get", "score"], 0.09]], 2.05]],
-              ["+", 0.04, ["*", ["get", "score"], 0.09]],
-            ],
-          },
-        },
-        beforeId,
-      );
-
-      map.addLayer(
-        {
-          id: "zones-outline",
-          type: "line",
-          source: "zones",
-          paint: {
-            "line-color": [
-              "case",
-              ["boolean", ["feature-state", "hover"], false],
-              ["to-color", ["get", "hc"]],
-              ["to-color", ["get", "sc"]],
-            ],
-            "line-width": [
-              "case",
-              ["boolean", ["feature-state", "hover"], false],
-              ["get", "hw"],
-              ["get", "sw"],
-            ],
-            "line-opacity": 1,
-          },
-          layout: {
-            "line-join": "round",
-            "line-cap": "round",
-          },
-        },
-        beforeId,
-      );
-
-      map.addSource("pins", {
-        type: "geojson",
-        data: { type: "FeatureCollection", features: [] },
-        promoteId: "zoneId",
-      });
-
-      /** Last = top of stack: dots above heat + nearly all basemap labels. */
-      map.addLayer({
-        id: "pins-circles",
-        type: "circle",
-        source: "pins",
-        paint: {
-          "circle-radius": ["max", 6, ["to-number", ["get", "r"]]],
-          "circle-color": ["to-color", ["get", "fillColor"]],
-          "circle-opacity": [
-            "case",
-            ["boolean", ["feature-state", "hover"], false],
-            0.92,
-            ["to-number", ["get", "fillOpacity"]],
-          ],
-          "circle-stroke-width": ["to-number", ["get", "strokeWidth"]],
-          "circle-stroke-color": ["to-color", ["get", "strokeColor"]],
-          "circle-stroke-opacity": 1,
-        },
-      });
-
       try {
         if (!map.getTerrain()) {
           map.addSource("solar-terrain-rgb", {
@@ -311,6 +374,9 @@ export function GeoMapLibreView({
         /* style may already include terrain */
       }
 
+      ensureSolarOverlayInstalled(map);
+      applySolarDataToMap(map, solarDataRef.current);
+
       stackSolarLayersOnTop(map);
       requestAnimationFrame(() => stackSolarLayersOnTop(map));
       cancelStackBursts = scheduleStackBursts(map, () => destroyed);
@@ -318,10 +384,7 @@ export function GeoMapLibreView({
       map.on("styledata", scheduleReorderAfterStyleChange);
       map.on("idle", onIdleRestack);
       map.once("idle", () => {
-        if (!destroyed) {
-          stackSolarLayersOnTop(map);
-          requestAnimationFrame(() => stackSolarLayersOnTop(map));
-        }
+        if (!destroyed) restackAfterStyleChange();
       });
 
       const popup = new maplibregl.Popup({
@@ -468,46 +531,12 @@ export function GeoMapLibreView({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- init once; data wired in second effect
   }, [browser]);
 
-  /** Voronoi regions, pins, fit bounds — mirrors GeoMapView logic. */
+  /** Sync GeoJSON when metrics / selection change. */
   useEffect(() => {
     const map = mapRef.current;
     if (!browser || !mapReady || !map?.isStyleLoaded()) return;
 
-    const metrics = buildHeatMetrics(zones, inputs, rowById);
-    const n = zones.length;
-
-    const vorFc = zoneVoronoiGeoJson(zones, rowById);
-    const landFc = clipZoneCellsToCountyLand(vorFc, SAN_DIEGO_COUNTY_OUTLINE);
-    const enriched = enrichLandFc(landFc, metrics, selectedId);
-
-    const zonesSrc = map.getSource("zones") as maplibregl.GeoJSONSource | undefined;
-    const pinsSrc = map.getSource("pins") as maplibregl.GeoJSONSource | undefined;
-    if (!zonesSrc || !pinsSrc) return;
-
-    zonesSrc.setData(enriched);
-
-    const pinFeatures = zones.map((z) => {
-      const row = rowById.get(z.id);
-      const m = metrics.get(z.id)!;
-      const { lat, lon } = zoneCentroid(z.id, row?.centroid ?? null);
-      const score = m.combinedScore;
-      const selected = z.id === selectedId;
-      const r = Math.min(markerRadiusFromScore(score, selected), 14);
-      return {
-        type: "Feature" as const,
-        geometry: { type: "Point" as const, coordinates: [lon, lat] },
-        properties: {
-          zoneId: z.id,
-          r,
-          fillColor: heatGradientHex(score),
-          strokeColor: selected ? "rgba(255,255,255,0.62)" : "rgba(255,255,255,0.22)",
-          strokeWidth: selected ? 1.75 : 0.85,
-          fillOpacity: 0.52,
-        },
-      };
-    });
-
-    pinsSrc.setData({ type: "FeatureCollection", features: pinFeatures });
+    applySolarDataToMap(map, solarDataRef.current);
 
     if (!initialCountyFitRef.current) {
       const box = bbox(SAN_DIEGO_COUNTY_OUTLINE);
@@ -528,9 +557,9 @@ export function GeoMapLibreView({
     });
     window.setTimeout(() => map.resize(), 80);
 
-    queueMicrotask(() => stackSolarLayersOnTop(map));
-    requestAnimationFrame(() => stackSolarLayersOnTop(map));
-    const t = window.setTimeout(() => stackSolarLayersOnTop(map), 400);
+    const t = window.setTimeout(() => {
+      applySolarDataToMap(map, solarDataRef.current);
+    }, 500);
     return () => window.clearTimeout(t);
   }, [browser, mapReady, zones, inputs, regionRows, selectedId, rowById]);
 
