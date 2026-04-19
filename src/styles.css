@@ -176,3 +176,129 @@
     animation: pulse-ring 2s ease-out infinite;
   }
 }
+
+/* Leaflet map popups — frosted glass (matches dark basemap, GeoMapView) */
+.leaflet-popup.map-glass-popup .leaflet-popup-content-wrapper {
+  padding: 0;
+  overflow: hidden;
+  border-radius: 14px;
+  background: oklch(0.22 0.035 250 / 0.48);
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  border: 1px solid oklch(1 0 0 / 0.12);
+  box-shadow:
+    0 16px 48px oklch(0.08 0.03 250 / 0.55),
+    inset 0 1px 0 oklch(1 0 0 / 0.1);
+}
+
+.leaflet-popup.map-glass-popup .leaflet-popup-content {
+  margin: 0;
+  padding: 14px 38px 16px 16px;
+  min-width: 216px;
+  max-width: min(92vw, 320px);
+}
+
+.leaflet-popup.map-glass-popup .leaflet-popup-tip {
+  background: oklch(0.22 0.035 250 / 0.48);
+  border: 1px solid oklch(1 0 0 / 0.1);
+  box-shadow: none;
+}
+
+.leaflet-popup.map-glass-popup a.leaflet-popup-close-button {
+  width: 28px;
+  height: 28px;
+  top: 8px;
+  right: 8px;
+  padding: 0;
+  font-size: 20px;
+  font-weight: 300;
+  line-height: 26px;
+  color: oklch(0.95 0.01 250 / 0.65);
+  transition:
+    color 0.15s ease,
+    background 0.15s ease;
+}
+
+.leaflet-popup.map-glass-popup a.leaflet-popup-close-button:hover {
+  color: oklch(0.99 0 0 / 0.95);
+  background: oklch(1 0 0 / 0.1);
+  border-radius: 8px;
+}
+
+/* MapLibre GL popups — frosted glass (defaults ship a white card; override hard) */
+.maplibregl-popup.map-glass-popup {
+  z-index: 620;
+  background: transparent !important;
+}
+
+.maplibregl-popup.map-glass-popup .maplibregl-popup-content {
+  margin: 0;
+  padding: 0;
+  min-width: 216px;
+  max-width: min(92vw, 320px);
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.maplibregl-popup.map-glass-popup .maplibregl-popup-content-wrapper {
+  padding: 0;
+  overflow: hidden;
+  border-radius: 14px;
+  background: oklch(0.22 0.035 250 / 0.55) !important;
+  backdrop-filter: blur(20px) saturate(1.35) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.35) !important;
+  border: 1px solid oklch(1 0 0 / 0.14) !important;
+  box-shadow:
+    0 16px 48px oklch(0.06 0.03 250 / 0.65),
+    inset 0 1px 0 oklch(1 0 0 / 0.12) !important;
+}
+
+.maplibregl-popup.map-glass-popup .maplibregl-popup-tip {
+  background: oklch(0.22 0.035 250 / 0.55) !important;
+  border: 1px solid oklch(1 0 0 / 0.12);
+  box-shadow: none !important;
+}
+
+.maplibregl-popup.map-glass-popup .maplibregl-popup-close-button {
+  width: 28px;
+  height: 28px;
+  top: 8px;
+  right: 8px;
+  padding: 0;
+  font-size: 20px;
+  font-weight: 300;
+  line-height: 26px;
+  color: oklch(0.95 0.01 250 / 0.65);
+  transition:
+    color 0.15s ease,
+    background 0.15s ease;
+}
+
+.maplibregl-popup.map-glass-popup .maplibregl-popup-close-button:hover {
+  color: oklch(0.99 0 0 / 0.95);
+  background: oklch(1 0 0 / 0.1);
+  border-radius: 8px;
+}
+
+.maplibregl-popup.map-glass-popup .map-popup-glass {
+  padding: 14px 38px 16px 16px;
+}
+
+.map-popup-glass-title {
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+  color: oklch(0.97 0.03 145 / 0.98);
+}
+
+.map-popup-glass-body {
+  font-size: 11px;
+  line-height: 1.55;
+  color: oklch(0.9 0.02 250 / 0.88);
+}
+
+.map-popup-glass-body strong {
+  color: oklch(0.96 0.04 145 / 0.92);
+  font-weight: 600;
+}

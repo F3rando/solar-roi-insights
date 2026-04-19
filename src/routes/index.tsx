@@ -86,7 +86,7 @@ function Index() {
         </header>
 
         {/* Top: Map + Insight */}
-        <section className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-4">
+        <section className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-4 lg:items-stretch">
           <MapView
             zones={SAN_DIEGO_ZONES}
             selectedId={selectedId}
