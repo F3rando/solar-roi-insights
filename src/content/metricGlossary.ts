@@ -113,6 +113,15 @@ export const METRIC_GLOSSARY = {
       "The badge reflects payback quality bands from the same inputs (high efficiency / moderate / weak ROI) to tie environmental story to financial story.",
     ],
   },
+  "map-install-priority": {
+    title: "How this map works",
+    source: "Install priority · blended score",
+    body: [
+      "Heat color blends modeled payback (your sliders plus Google Solar sunshine where available) with the permit adoption index — 50/50 — normalized across the eight zones so you’re comparing apples to apples within this dashboard.",
+      "Regions are Voronoi tiles from zone centroids, clipped to a simplified San Diego County outline so shading stays on land (not ocean). Boundaries are illustrative service-style partitions, not municipal GIS.",
+      "Hover a shaded region to emphasize that zone’s color; click the region to lock the dashboard to that neighborhood. Hover a centroid dot to preview the glass detail card — click the dot or region to apply the same selection.",
+    ],
+  },
 } as const;
 
 export type MetricGlossaryKey = keyof typeof METRIC_GLOSSARY;

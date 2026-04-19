@@ -35,7 +35,6 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   const [selectedId, setSelectedId] = useState("north-park");
-  const [layer, setLayer] = useState<"solar" | "heat">("solar");
   const [inputs, setInputs] = useState<Inputs>({
     systemKw: 7.5,
     investment: 21500,
@@ -87,13 +86,13 @@ function Index() {
         </header>
 
         {/* Top: Map + Insight */}
-        <section className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-4">
+        <section className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-4 lg:items-stretch">
           <MapView
             zones={SAN_DIEGO_ZONES}
             selectedId={selectedId}
             onSelect={setSelectedId}
-            layer={layer}
-            onLayerChange={setLayer}
+            inputs={inputs}
+            regionRows={regionsPayload?.regions}
           />
           <InsightPanel
             zone={zone}

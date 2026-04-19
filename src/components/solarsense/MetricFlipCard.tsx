@@ -152,7 +152,7 @@ export function MetricFlipCard({ metricKey, className, front }: MetricFlipCardPr
         {open ? (
           <motion.div
             key="metric-flip-layer"
-            className="fixed inset-0 z-[200]"
+            className="fixed inset-0 z-[600]"
             initial={{ opacity: 1 }}
             animate={{ opacity: 1 }}
             /* Hold presence for the full close window so nested exit crossfades + backdrop + shrink can finish. */
