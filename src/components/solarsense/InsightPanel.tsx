@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FileDown } from "lucide-react";
+import { FileDown, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { MetricFlipCard } from "@/components/solarsense/MetricFlipCard";
 import type { MetricGlossaryKey } from "@/content/metricGlossary";
@@ -67,8 +67,8 @@ export function InsightPanel({
       const aiInsights = narrative.ok ? narrative.insights : null;
       const description = !narrative.ok
         ? narrative.code === "NO_API_KEY"
-          ? "Add GEMINI_API_KEY on the server to include Gemini narrative pages."
-          : `AI section omitted: ${narrative.error.slice(0, 180)}`
+          ? "Strategic narrative pages require the narrative service key on the server."
+          : `Strategic narrative omitted: ${narrative.error.slice(0, 180)}`
         : undefined;
       const params = buildFullReportPdfParams(
         allRegions,
@@ -79,9 +79,17 @@ export function InsightPanel({
         aiInsights,
       );
       downloadSolarSenseFullReport(params);
-      toast.success(narrative.ok ? "PDF with AI narrative downloaded" : "PDF report downloaded", {
-        description,
-      });
+      toast.custom(
+        () => (
+          <div className="flex w-full max-w-sm flex-col rounded-lg border border-zinc-800 bg-zinc-950 px-4 py-3 text-white shadow-xl">
+            <p className="text-sm font-semibold tracking-tight text-white">Download Started</p>
+            {description ? (
+              <p className="mt-1.5 text-xs leading-snug text-zinc-300">{description}</p>
+            ) : null}
+          </div>
+        ),
+        { duration: 4500 },
+      );
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not generate PDF");
     } finally {
@@ -196,11 +204,16 @@ export function InsightPanel({
 
       <button
         type="button"
+        aria-busy={pdfBusy}
         disabled={!regionsReady || pdfBusy}
         onClick={handleFullPdf}
         className="mt-2 w-full rounded-xl py-3 font-semibold text-primary-foreground bg-primary transition glow-primary flex items-center justify-center gap-2 hover:opacity-90 disabled:pointer-events-none disabled:opacity-40"
       >
-        <FileDown className="size-4 shrink-0" />
+        {pdfBusy ? (
+          <Loader2 className="size-4 shrink-0 animate-spin" aria-hidden />
+        ) : (
+          <FileDown className="size-4 shrink-0" aria-hidden />
+        )}
         {pdfBusy ? "Building PDF…" : "Generate full PDF report"}
       </button>
     </aside>

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-/** Validated Gemini output — one call per full report (business / government lens). */
+/** Validated narrative JSON — one call per full report (business / government lens). */
 export const solarReportAiInsightsSchema = z.object({
   executive_summary: z.string(),
   /** Memo-style: where to deploy attention, capital, or policy given the bundle (not a stat recap). */

@@ -31,7 +31,11 @@ export const fetchSolarReportNarrative = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<SolarReportNarrativeResult> => {
     const apiKey = process.env.GEMINI_API_KEY?.trim();
     if (!apiKey) {
-      return { ok: false, error: "GEMINI_API_KEY is not set on the server.", code: "NO_API_KEY" };
+      return {
+        ok: false,
+        error: "Narrative service API key is not set on the server.",
+        code: "NO_API_KEY",
+      };
     }
 
     const systemPrompt = `You are writing for decision-makers: city/county energy offices, economic development, sustainability leads, institutional investors, utilities, and program managers evaluating where solar deployment and related investment deliver the most public and commercial value.
@@ -51,6 +55,7 @@ Anti-patterns (do NOT):
 - Open with a paragraph that restates each column for the whole table.
 - Give generic "solar is good" filler.
 - Provide legal, tax, or guaranteed savings promises.
+- Name vendors, models, or automation (e.g. "AI", "machine learning", chatbots) in any output string; write as a neutral analyst memo.
 
 Output strictly valid JSON (no markdown, no code fences) with this shape:
 {
@@ -111,7 +116,7 @@ You MUST include one regions[] entry for every region in the input, in the same 
       const errText = await res.text().catch(() => "");
       return {
         ok: false,
-        error: `Gemini HTTP ${res.status}: ${errText.slice(0, 400)}`,
+        error: `Narrative API HTTP ${res.status}: ${errText.slice(0, 400)}`,
         code: "GEMINI_HTTP",
       };
     }
@@ -120,7 +125,11 @@ You MUST include one regions[] entry for every region in the input, in the same 
     try {
       body = await res.json();
     } catch {
-      return { ok: false, error: "Invalid Gemini response (not JSON).", code: "GEMINI_BODY" };
+      return {
+        ok: false,
+        error: "Invalid narrative API response (not JSON).",
+        code: "GEMINI_BODY",
+      };
     }
 
     const parts = (body as { candidates?: { content?: { parts?: { text?: string }[] } }[] })

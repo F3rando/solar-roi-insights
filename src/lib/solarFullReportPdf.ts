@@ -20,7 +20,7 @@ export type FullReportPdfParams = {
   summary?: SummaryV1 | null;
   dataSourceLabel: string;
   manifestGeneratedAt?: string | null;
-  /** Optional Gemini narrative (server-generated JSON). */
+  /** Optional strategic narrative (structured supplement from server). */
   aiInsights?: SolarReportAiInsights | null;
 };
 
@@ -57,14 +57,14 @@ function appendAiNarrativeToPdf(
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
   doc.setTextColor(20, 30, 25);
-  doc.text("Narrative — program & investment lens (Gemini)", margin, y);
+  doc.text("Strategic narrative — program & investment lens", margin, y);
   y += 22;
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
   const aiDisc = doc.splitTextToSize(
-    "Model-generated briefing from the facts in this report—not engineering, interconnection, tariff, or legal advice. Validate before commitments.",
+    "Supplemental analysis derived from the facts in this report—not engineering, interconnection, tariff, or legal advice. Validate before commitments.",
     maxW,
   );
   ensureSpace(aiDisc.length * 11 + 8);
@@ -189,7 +189,7 @@ export function downloadSolarSenseFullReport(params: FullReportPdfParams): void 
   doc.setFontSize(10);
   doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
   const generated = new Date().toISOString().replace("T", " ").slice(0, 19) + " UTC";
-  doc.text(`Generated: ${generated}`, margin, y);
+  doc.text(`Report timestamp: ${generated}`, margin, y);
   y += 14;
   doc.text(`Data source: ${dataSourceLabel}`, margin, y);
   y += 14;
