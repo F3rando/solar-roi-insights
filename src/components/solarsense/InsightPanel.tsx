@@ -20,9 +20,10 @@ export function InsightPanel({
   apiRegion?: RegionRowV1 | null;
   datasetMedianPaybackYears?: number | null;
 }) {
+  const solarInsights = apiRegion?.solar_insights;
   const eff = efficiencyPct(zone.heatC);
-  const payback = paybackYears(zone, inputs);
-  const savings = cumulativeSavings(zone, inputs);
+  const payback = paybackYears(zone, inputs, solarInsights);
+  const savings = cumulativeSavings(zone, inputs, 25, solarInsights);
   const regionAvg = datasetMedianPaybackYears ?? 7.2;
 
   return (
