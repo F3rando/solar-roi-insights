@@ -83,6 +83,39 @@ export function InsightPanel({
         </Card>
       )}
 
+      {apiRegion?.solar_insights && (
+        <Card label="Google Solar (building near zone centroid)">
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            {apiRegion.solar_insights.max_sunshine_hours_per_year != null && (
+              <div>
+                <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                  Max sunshine / yr
+                </div>
+                <div className="text-lg font-semibold">
+                  {Math.round(apiRegion.solar_insights.max_sunshine_hours_per_year)} h
+                </div>
+              </div>
+            )}
+            {apiRegion.solar_insights.max_array_panels_count != null && (
+              <div>
+                <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                  Est. max panels
+                </div>
+                <div className="text-lg font-semibold">{apiRegion.solar_insights.max_array_panels_count}</div>
+              </div>
+            )}
+            {apiRegion.solar_insights.carbon_offset_factor_kg_per_mwh != null && (
+              <div className="col-span-2 text-xs text-muted-foreground">
+                Carbon offset factor: {apiRegion.solar_insights.carbon_offset_factor_kg_per_mwh} kg CO₂ / MWh
+                {apiRegion.solar_insights.imagery_quality
+                  ? ` · imagery ${apiRegion.solar_insights.imagery_quality}`
+                  : ""}
+              </div>
+            )}
+          </div>
+        </Card>
+      )}
+
       <button className="mt-2 w-full rounded-xl py-3 font-semibold text-primary-foreground bg-primary hover:opacity-90 transition glow-primary flex items-center justify-center gap-2">
         <FileDown className="size-4" />
         Generate Full PDF Report

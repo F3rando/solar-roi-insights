@@ -9,7 +9,10 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "data:validate": "node data/scripts/validate-processed.mjs",
+    "data:publish": "bash data/scripts/publish-processed.sh",
+    "data:ship": "python3 data/notebooks/aggregate_san_diego.py && npm run data:validate && npm run data:publish"
   },
   "dependencies": {
     "@cloudflare/vite-plugin": "^1.25.5",
