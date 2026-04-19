@@ -1,12 +1,21 @@
 import { Leaf, TreePine, BadgeCheck } from "lucide-react";
 import { MetricFlipCard } from "@/components/solarsense/MetricFlipCard";
 import type { Zone, Inputs } from "@/lib/solar";
+import type { SolarInsightsV1 } from "@/types/api";
 import { co2AvoidedTons, treesEquivalent, zoneStatus } from "@/lib/solar";
 
-export function EnvROI({ zone, inputs }: { zone: Zone; inputs: Inputs }) {
-  const co2 = co2AvoidedTons(zone, inputs);
+export function EnvROI({
+  zone,
+  inputs,
+  solarInsights,
+}: {
+  zone: Zone;
+  inputs: Inputs;
+  solarInsights?: SolarInsightsV1 | null;
+}) {
+  const co2 = co2AvoidedTons(zone, inputs, 25, solarInsights);
   const trees = treesEquivalent(co2);
-  const status = zoneStatus(zone, inputs);
+  const status = zoneStatus(zone, inputs, solarInsights);
 
   const tone =
     status.tone === "solar"

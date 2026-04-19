@@ -1,0 +1,6 @@
+# Track this folder in git but keep large extracts off GitHub.
+# Sync raw assets to S3 separately (partner bucket / aws cli).
+*
+!.gitignore
+!.gitkeep
+!README.md

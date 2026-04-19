@@ -8,7 +8,7 @@ import { WhatIfPanel } from "@/components/solarsense/WhatIfPanel";
 import { EnvROI } from "@/components/solarsense/EnvROI";
 import { SavingsHero } from "@/components/solarsense/SavingsHero";
 import { SAN_DIEGO_ZONES, type Inputs } from "@/lib/solar";
-import { useSolarRegions, useSolarSummary } from "@/hooks/useSolarMetrics";
+import { useSolarManifest, useSolarRegions, useSolarSummary } from "@/hooks/useSolarMetrics";
 import { useLambdaApi } from "@/lib/api";
 import { MetricFlipCard } from "@/components/solarsense/MetricFlipCard";
 import type { MetricGlossaryKey } from "@/content/metricGlossary";
@@ -44,6 +44,7 @@ function Index() {
 
   const { data: summary, isLoading: summaryLoading, isError: summaryError } = useSolarSummary();
   const { data: regionsPayload, isLoading: regionsLoading, isError: regionsError } = useSolarRegions();
+  const { data: manifest } = useSolarManifest();
   const viaApi = useLambdaApi();
 
   const zone = useMemo(
@@ -104,11 +105,11 @@ function Index() {
 
         {/* Bottom bento */}
         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <SavingsHero zone={zone} inputs={inputs} />
+          <SavingsHero zone={zone} inputs={inputs} solarInsights={apiRegion?.solar_insights} />
           <div className="md:col-span-2 lg:col-span-2 row-span-2">
-            <ProjectionChart zone={zone} inputs={inputs} />
+            <ProjectionChart zone={zone} inputs={inputs} solarInsights={apiRegion?.solar_insights} />
           </div>
-          <EnvROI zone={zone} inputs={inputs} />
+          <EnvROI zone={zone} inputs={inputs} solarInsights={apiRegion?.solar_insights} />
           <div className="md:col-span-2 lg:col-span-1 lg:col-start-1 lg:row-start-2">
             <WhatIfPanel inputs={inputs} onChange={setInputs} />
           </div>
@@ -117,6 +118,7 @@ function Index() {
               viaApi={viaApi}
               regionsLoading={regionsLoading}
               regionsError={regionsError}
+              manifestGeneratedAt={manifest?.generated_at ?? null}
             />
           </div>
         </section>
@@ -186,10 +188,12 @@ function DataFeedCard({
   viaApi,
   regionsLoading,
   regionsError,
+  manifestGeneratedAt,
 }: {
   viaApi: boolean;
   regionsLoading: boolean;
   regionsError: boolean;
+  manifestGeneratedAt: string | null;
 }) {
   const metricsStatus = regionsError ? "Error" : regionsLoading ? "Loading" : "Ready";
   const metricsTone = regionsError ? "text-destructive" : regionsLoading ? "text-warn" : "text-solar";
@@ -202,6 +206,11 @@ function DataFeedCard({
   return (
     <div className="panel p-5 h-full">
       <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground">Data Feeds</div>
+      {manifestGeneratedAt && (
+        <div className="mt-2 text-[10px] font-mono text-muted-foreground leading-relaxed">
+          Snapshot UTC: {manifestGeneratedAt}
+        </div>
+      )}
       <ul className="mt-3 space-y-2 text-sm">
         {rows.map((r) => (
           <li key={r.src} className="flex items-center justify-between gap-2">
