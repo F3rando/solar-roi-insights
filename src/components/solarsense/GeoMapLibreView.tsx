@@ -17,6 +17,7 @@ import {
   markerRadiusFromScore,
   regionPolygonStyle,
 } from "@/lib/mapRelativePriority";
+import { MapViewModeToggleControl } from "@/lib/mapViewModeControl";
 import { maptilerDarkStyleUrl, maptilerTerrainRgbTilesUrl } from "@/lib/maptiler";
 import { mapZonePopupHtml } from "@/lib/mapZonePopupHtml";
 
@@ -356,7 +357,8 @@ export function GeoMapLibreView({
       minZoom: 8,
     });
 
-    map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-left");
+    map.addControl(new maplibregl.NavigationControl({ visualizePitch: false }), "top-left");
+    map.addControl(new MapViewModeToggleControl(), "top-left");
 
     map.on("load", () => {
       if (destroyed) return;
