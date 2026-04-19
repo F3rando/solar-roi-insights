@@ -7,8 +7,8 @@ export function ProjectionChart({ zone, inputs }: { zone: Zone; inputs: Inputs }
 
   return (
     <div className="panel p-5 h-full flex flex-col">
-      <div className="flex items-start justify-between mb-3">
-        <div>
+      <div className="flex items-start justify-between gap-2 mb-3">
+        <div className="min-w-0">
           <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground">25-Year Cost Projection</div>
           <div className="text-sm text-foreground/80 mt-1">Cumulative spend: solar vs grid</div>
         </div>

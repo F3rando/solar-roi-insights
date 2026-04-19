@@ -1,4 +1,5 @@
 import { Leaf, TreePine, BadgeCheck } from "lucide-react";
+import { MetricFlipCard } from "@/components/solarsense/MetricFlipCard";
 import type { Zone, Inputs } from "@/lib/solar";
 import { co2AvoidedTons, treesEquivalent, zoneStatus } from "@/lib/solar";
 
@@ -15,23 +16,31 @@ export function EnvROI({ zone, inputs }: { zone: Zone; inputs: Inputs }) {
       : "bg-heat/15 text-heat border-heat/40";
 
   return (
-    <div className="panel p-5 flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground">Environmental ROI</div>
-          <div className="text-sm mt-1">25-year projected impact</div>
-        </div>
-        <span className={`text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full border ${tone} flex items-center gap-1`}>
-          <BadgeCheck className="size-3" />
-          {status.label}
-        </span>
-      </div>
+    <MetricFlipCard
+      metricKey="env-environmental-roi"
+      className="panel p-5 flex flex-col gap-4"
+      front={
+        <>
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground">Environmental ROI</div>
+              <div className="text-sm mt-1">25-year projected impact</div>
+            </div>
+            <span
+              className={`shrink-0 text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full border ${tone} flex items-center gap-1`}
+            >
+              <BadgeCheck className="size-3" />
+              {status.label}
+            </span>
+          </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <Stat icon={<Leaf className="size-4" />} value={`${co2}t`} label="CO₂ Avoided" />
-        <Stat icon={<TreePine className="size-4" />} value={trees.toLocaleString()} label="Trees Equivalent" />
-      </div>
-    </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Stat icon={<Leaf className="size-4" />} value={`${co2}t`} label="CO₂ Avoided" />
+            <Stat icon={<TreePine className="size-4" />} value={trees.toLocaleString()} label="Trees Equivalent" />
+          </div>
+        </>
+      }
+    />
   );
 }
 
