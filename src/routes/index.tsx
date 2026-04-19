@@ -100,6 +100,12 @@ function Index() {
             inputs={inputs}
             apiRegion={apiRegion}
             datasetMedianPaybackYears={summary?.kpis.median_payback_years ?? null}
+            allRegions={regionsPayload?.regions ?? []}
+            summary={summary}
+            regionsLoading={regionsLoading}
+            regionsError={regionsError}
+            manifestGeneratedAt={manifest?.generated_at ?? null}
+            dataSourceLabel={viaApi ? "Lambda API" : "Static /public/processed/v1"}
           />
         </section>
 

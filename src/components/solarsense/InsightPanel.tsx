@@ -1,42 +1,108 @@
+import { useState } from "react";
 import { FileDown } from "lucide-react";
+import { toast } from "sonner";
 import { MetricFlipCard } from "@/components/solarsense/MetricFlipCard";
 import type { MetricGlossaryKey } from "@/content/metricGlossary";
 import type { Zone, Inputs } from "@/lib/solar";
-import type { RegionRowV1 } from "@/types/api";
+import type { RegionRowV1, SummaryV1 } from "@/types/api";
 import {
-  efficiencyPct,
-  paybackYears,
+  SAN_DIEGO_ZONES,
   cumulativeSavings,
+  efficiencyPct,
   fmtUsd,
+  paybackYears,
 } from "@/lib/solar";
+import { buildSolarReportFactsPayload } from "@/lib/buildSolarReportFactsPayload";
+import { fetchSolarReportNarrative } from "@/lib/solarReportNarrativeFn";
+import { buildFullReportPdfParams, downloadSolarSenseFullReport } from "@/lib/solarFullReportPdf";
 
 export function InsightPanel({
   zone,
   inputs,
   apiRegion,
   datasetMedianPaybackYears,
+  allRegions,
+  summary,
+  regionsLoading,
+  regionsError,
+  manifestGeneratedAt,
+  dataSourceLabel,
 }: {
   zone: Zone;
   inputs: Inputs;
   apiRegion?: RegionRowV1 | null;
   datasetMedianPaybackYears?: number | null;
+  allRegions: RegionRowV1[];
+  summary?: SummaryV1 | null;
+  regionsLoading: boolean;
+  regionsError: boolean;
+  manifestGeneratedAt: string | null;
+  dataSourceLabel: string;
 }) {
+  const [pdfBusy, setPdfBusy] = useState(false);
   const solarInsights = apiRegion?.solar_insights;
   const eff = efficiencyPct(zone.heatC);
   const payback = paybackYears(zone, inputs, solarInsights);
   const savings = cumulativeSavings(zone, inputs, 25, solarInsights);
   const regionAvg = datasetMedianPaybackYears ?? 7.2;
 
+  const regionsReady = !regionsLoading && !regionsError && allRegions.length > 0;
+
+  const handleFullPdf = async () => {
+    if (!regionsReady) {
+      toast.error("Load regional data first, then try again.");
+      return;
+    }
+    setPdfBusy(true);
+    try {
+      const facts = buildSolarReportFactsPayload(
+        allRegions,
+        SAN_DIEGO_ZONES,
+        inputs,
+        summary,
+        dataSourceLabel,
+        manifestGeneratedAt,
+      );
+      const narrative = await fetchSolarReportNarrative({ data: facts });
+      const aiInsights = narrative.ok ? narrative.insights : null;
+      const description = !narrative.ok
+        ? narrative.code === "NO_API_KEY"
+          ? "Add GEMINI_API_KEY on the server to include Gemini narrative pages."
+          : `AI section omitted: ${narrative.error.slice(0, 180)}`
+        : undefined;
+      const params = buildFullReportPdfParams(
+        allRegions,
+        inputs,
+        summary,
+        dataSourceLabel,
+        manifestGeneratedAt,
+        aiInsights,
+      );
+      downloadSolarSenseFullReport(params);
+      toast.success(narrative.ok ? "PDF with AI narrative downloaded" : "PDF report downloaded", {
+        description,
+      });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not generate PDF");
+    } finally {
+      setPdfBusy(false);
+    }
+  };
+
   return (
     <aside key={zone.id} className="w-full lg:w-[340px] shrink-0 flex flex-col gap-3">
       <div>
-        <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-primary">Insight Engine</div>
+        <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-primary">
+          Insight Engine
+        </div>
         <h2 className="text-lg font-semibold mt-1">{zone.name}, San Diego CA</h2>
       </div>
 
       <Card label="Solar Payback Period" glossaryKey="insight-payback">
         <div className="text-3xl font-bold text-solar">{payback.toFixed(1)} Years</div>
-        <div className="text-xs text-muted-foreground mt-1">Average for region: {regionAvg} years</div>
+        <div className="text-xs text-muted-foreground mt-1">
+          Average for region: {regionAvg} years
+        </div>
       </Card>
 
       <div className="grid grid-cols-2 gap-3">
@@ -49,13 +115,18 @@ export function InsightPanel({
       </div>
 
       <Card label="City Heat Adjustment" glossaryKey="insight-urban-heat">
-        <div className="text-xl font-semibold">{(zone.heatC * 9 / 5 + 32).toFixed(0)}°F Urban Heat</div>
+        <div className="text-xl font-semibold">
+          {((zone.heatC * 9) / 5 + 32).toFixed(0)}°F Urban Heat
+        </div>
         <div className="text-xs text-muted-foreground mt-1">Source: Scripps Heat Map Data</div>
       </Card>
 
       <Card label="Utility Rate (EIA)" glossaryKey="insight-utility-rate">
         <div className="flex items-baseline justify-between">
-          <div className="text-xl font-semibold">${zone.utilityRate.toFixed(2)}<span className="text-sm text-muted-foreground">/kWh</span></div>
+          <div className="text-xl font-semibold">
+            ${zone.utilityRate.toFixed(2)}
+            <span className="text-sm text-muted-foreground">/kWh</span>
+          </div>
           <div className="text-xs text-solar">+{inputs.utilityIncreasePct.toFixed(1)}% / yr</div>
         </div>
       </Card>
@@ -64,16 +135,24 @@ export function InsightPanel({
         <Card label="Dataset snapshot (ZenPower pipeline)" glossaryKey="insight-zenpower-snapshot">
           <div className="grid grid-cols-2 gap-2 text-sm">
             <div>
-              <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Adoption index</div>
-              <div className="text-lg font-semibold">{(apiRegion.adoption_index * 100).toFixed(0)}%</div>
+              <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                Adoption index
+              </div>
+              <div className="text-lg font-semibold">
+                {(apiRegion.adoption_index * 100).toFixed(0)}%
+              </div>
             </div>
             <div>
-              <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">YoY growth</div>
-              <div className="text-lg font-semibold text-solar">+{apiRegion.yoy_growth_pct.toFixed(1)}%</div>
+              <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                YoY growth
+              </div>
+              <div className="text-lg font-semibold text-solar">
+                +{apiRegion.yoy_growth_pct.toFixed(1)}%
+              </div>
             </div>
             <div className="col-span-2 text-xs text-muted-foreground">
-              Est. median savings / yr: ${apiRegion.median_est_annual_savings_usd.toLocaleString()} · bucket:{" "}
-              {apiRegion.install_count_bucket}
+              Est. median savings / yr: ${apiRegion.median_est_annual_savings_usd.toLocaleString()}{" "}
+              · bucket: {apiRegion.install_count_bucket}
             </div>
           </div>
         </Card>
@@ -97,12 +176,15 @@ export function InsightPanel({
                 <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
                   Est. max panels
                 </div>
-                <div className="text-lg font-semibold">{apiRegion.solar_insights.max_array_panels_count}</div>
+                <div className="text-lg font-semibold">
+                  {apiRegion.solar_insights.max_array_panels_count}
+                </div>
               </div>
             )}
             {apiRegion.solar_insights.carbon_offset_factor_kg_per_mwh != null && (
               <div className="col-span-2 text-xs text-muted-foreground">
-                Carbon offset factor: {apiRegion.solar_insights.carbon_offset_factor_kg_per_mwh} kg CO₂ / MWh
+                Carbon offset factor: {apiRegion.solar_insights.carbon_offset_factor_kg_per_mwh} kg
+                CO₂ / MWh
                 {apiRegion.solar_insights.imagery_quality
                   ? ` · imagery ${apiRegion.solar_insights.imagery_quality}`
                   : ""}
@@ -112,9 +194,14 @@ export function InsightPanel({
         </Card>
       )}
 
-      <button className="mt-2 w-full rounded-xl py-3 font-semibold text-primary-foreground bg-primary hover:opacity-90 transition glow-primary flex items-center justify-center gap-2">
-        <FileDown className="size-4" />
-        Generate Full PDF Report
+      <button
+        type="button"
+        disabled={!regionsReady || pdfBusy}
+        onClick={handleFullPdf}
+        className="mt-2 w-full rounded-xl py-3 font-semibold text-primary-foreground bg-primary transition glow-primary flex items-center justify-center gap-2 hover:opacity-90 disabled:pointer-events-none disabled:opacity-40"
+      >
+        <FileDown className="size-4 shrink-0" />
+        {pdfBusy ? "Building PDF…" : "Generate full PDF report"}
       </button>
     </aside>
   );
@@ -135,7 +222,9 @@ function Card({
       className="panel p-4"
       front={
         <>
-          <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground">{label}</div>
+          <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground">
+            {label}
+          </div>
           <div className="mt-2">{children}</div>
         </>
       }
