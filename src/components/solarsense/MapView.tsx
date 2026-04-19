@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { Zone, Inputs } from "@/lib/solar";
 import type { RegionRowV1 } from "@/types/api";
 import { MetricFlipCard } from "@/components/solarsense/MetricFlipCard";
@@ -25,10 +25,7 @@ export function MapView({
   inputs: Inputs;
   regionRows: RegionRowV1[] | null | undefined;
 }) {
-  const [mapKind, setMapKind] = useState<"pending" | "maplibre" | "leaflet">("pending");
-  useEffect(() => {
-    setMapKind(hasMaptilerKey() ? "maplibre" : "leaflet");
-  }, []);
+  const [mapKind] = useState<"maplibre" | "leaflet">(() => (hasMaptilerKey() ? "maplibre" : "leaflet"));
 
   return (
     <div
@@ -39,11 +36,7 @@ export function MapView({
         "ring-1 ring-white/[0.07]",
       ].join(" ")}
     >
-      {mapKind === "pending" ? (
-        <div className="absolute inset-0 z-0 flex items-center justify-center bg-card/80 text-muted-foreground text-xs font-mono">
-          Loading map…
-        </div>
-      ) : mapKind === "maplibre" ? (
+      {mapKind === "maplibre" ? (
         <GeoMapLibreView
           zones={zones}
           inputs={inputs}
@@ -70,11 +63,9 @@ export function MapView({
       <div className="absolute top-4 right-4 z-[500] text-right">
         <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-primary">Live map</div>
         <div className="text-xs text-muted-foreground">
-          {mapKind === "pending"
-            ? "Starting…"
-            : mapKind === "maplibre"
-              ? "MapTiler 3D · terrain · 8 zones"
-              : "CARTO 2D — set VITE_MAPTILER_KEY, then restart the dev server"}
+          {mapKind === "maplibre"
+            ? "MapTiler 3D · terrain · 8 zones"
+            : "CARTO 2D — set VITE_MAPTILER_KEY, then restart the dev server"}
         </div>
       </div>
 

@@ -133,12 +133,14 @@ export function regionFillOpacity(score: number): number {
 export function regionStrokeColor(score: number, selected: boolean): string {
   if (selected) return "rgba(255, 255, 255, 0.72)";
   const s = Math.max(0, Math.min(1, score));
-  const a = 0.022 + s * 0.055;
+  // Keep a visible outline on every region; selected stays bold via weight + higher alpha.
+  const a = 0.12 + s * 0.12;
   return `rgba(255,255,255,${a})`;
 }
 
 export function regionStrokeWeight(selected: boolean): number {
-  return selected ? 2 : 0.45;
+  // Default outlines should read at a glance; selected remains clearly emphasized.
+  return selected ? 2 : 0.95;
 }
 
 /** Voronoi fills — `hover` boosts opacity/stroke on region hover; selected stays bold when not hovered. */

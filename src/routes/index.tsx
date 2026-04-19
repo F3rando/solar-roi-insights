@@ -1,26 +1,16 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { Sidebar } from "@/components/solarsense/Sidebar";
-import { MapView } from "@/components/solarsense/MapView";
-import { InsightPanel } from "@/components/solarsense/InsightPanel";
-import { ProjectionChart } from "@/components/solarsense/ProjectionChart";
-import { WhatIfPanel } from "@/components/solarsense/WhatIfPanel";
-import { EnvROI } from "@/components/solarsense/EnvROI";
-import { SavingsHero } from "@/components/solarsense/SavingsHero";
-import { SAN_DIEGO_ZONES, type Inputs } from "@/lib/solar";
-import { useSolarManifest, useSolarRegions, useSolarSummary } from "@/hooks/useSolarMetrics";
-import { useLambdaApi } from "@/lib/api";
-import { MetricFlipCard } from "@/components/solarsense/MetricFlipCard";
-import type { MetricGlossaryKey } from "@/content/metricGlossary";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useCallback, useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { fetchManifest, fetchRegions, fetchSummary } from "@/lib/api";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "SolarSense — Solar ROI Decision Intelligence for San Diego" },
+      { title: "SolarSense — Solar ROI Intelligence for Cities & Business" },
       {
         name: "description",
         content:
-          "Bridge Scripps urban-heat data with EIA utility rates to model solar payback, 25-year savings, and environmental ROI across San Diego neighborhoods.",
+          "A decision intelligence dashboard for solar adoption: savings, payback, and environmental ROI by neighborhood.",
       },
       { property: "og:title", content: "SolarSense — Solar ROI Decision Intelligence" },
       {
@@ -30,200 +20,134 @@ export const Route = createFileRoute("/")({
       },
     ],
   }),
-  component: Index,
+  component: Landing,
 });
 
-function Index() {
-  const [selectedId, setSelectedId] = useState("north-park");
-  const [inputs, setInputs] = useState<Inputs>({
-    systemKw: 7.5,
-    investment: 21500,
-    utilityIncreasePct: 4.2,
-  });
+function Landing() {
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const [warming, setWarming] = useState(false);
 
-  const { data: summary, isLoading: summaryLoading, isError: summaryError } = useSolarSummary();
-  const { data: regionsPayload, isLoading: regionsLoading, isError: regionsError } = useSolarRegions();
-  const { data: manifest } = useSolarManifest();
-  const viaApi = useLambdaApi();
+  const warmDashboard = useCallback(async () => {
+    await Promise.all([
+      queryClient.ensureQueryData({ queryKey: ["solar", "summary"], queryFn: fetchSummary }),
+      queryClient.ensureQueryData({ queryKey: ["solar", "regions"], queryFn: fetchRegions }),
+      queryClient.ensureQueryData({ queryKey: ["solar", "manifest"], queryFn: fetchManifest }),
+    ]);
+  }, [queryClient]);
 
-  const zone = useMemo(
-    () => SAN_DIEGO_ZONES.find((z) => z.id === selectedId) ?? SAN_DIEGO_ZONES[0],
-    [selectedId],
-  );
-
-  const apiRegion = useMemo(() => {
-    const list = regionsPayload?.regions;
-    if (!list?.length) return null;
-    return list.find((r) => r.id === selectedId) ?? null;
-  }, [regionsPayload, selectedId]);
+  useEffect(() => {
+    void warmDashboard();
+  }, [warmDashboard]);
 
   return (
-    <div className="dark min-h-screen flex bg-background text-foreground">
-      <Sidebar />
+    <div className="dark min-h-screen bg-background text-foreground overflow-hidden">
+      <div aria-hidden className="pointer-events-none absolute inset-0">
+        <div className="absolute -top-24 -left-24 h-80 w-80 rounded-full bg-primary/20 blur-3xl" />
+        <div className="absolute top-24 -right-24 h-96 w-96 rounded-full bg-solar/20 blur-3xl" />
+        <div className="absolute bottom-0 left-1/3 h-72 w-72 rounded-full bg-warn/10 blur-3xl" />
+      </div>
 
-      <main className="flex-1 min-w-0 p-4 md:p-6 flex flex-col gap-4">
-        {/* Header */}
-        <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-primary">SolarSense</div>
-            <h1 className="text-2xl font-bold mt-0.5">
-              Decision Intelligence for <span className="gradient-text">Solar ROI</span>
+      <main className="relative mx-auto max-w-6xl px-5 py-12 md:py-16">
+        <div className="flex items-center justify-between">
+          <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-primary">SolarSense</div>
+          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            <Link to="/methodology" className="hover:text-foreground">
+              Methodology
+            </Link>
+            <Link
+              to={"/dashboard" as any}
+              className="hover:text-foreground"
+              onMouseEnter={() => void warmDashboard()}
+            >
+              Dashboard
+            </Link>
+          </div>
+        </div>
+
+        <section className="mt-12 grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-10 items-start">
+          <div className="min-w-0">
+            <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-card/40 px-3 py-1 text-[11px] text-muted-foreground">
+              <span className="size-1.5 rounded-full bg-primary shadow-[var(--shadow-glow-primary)]" />
+              Built for cities, utilities, and enterprise sustainability teams
+            </div>
+
+            <h1 className="mt-5 text-4xl md:text-5xl font-bold tracking-tight leading-[1.05]">
+              Make solar decisions with <span className="gradient-text">ROI clarity</span>.
             </h1>
-            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-              <Link to="/methodology" className="text-primary hover:underline">
-                Methodology
-              </Link>
-              <span>
-                Data: {viaApi ? "API (Lambda)" : "static /processed/v1"}
-              </span>
+            <p className="mt-5 text-base md:text-lg text-muted-foreground max-w-[62ch] leading-relaxed">
+              SolarSense turns neighborhood-scale adoption + rate assumptions into decision intelligence:
+              payback, 25-year savings, and CO₂ impact—so governments and businesses can prioritize the
+              places where solar wins fastest.
+            </p>
+
+            <div className="mt-8 flex flex-col sm:flex-row sm:items-center gap-3">
+              <button
+                type="button"
+                onMouseEnter={() => void warmDashboard()}
+                onClick={async () => {
+                  if (warming) return;
+                  setWarming(true);
+                  try {
+                    await warmDashboard();
+                    await navigate({ to: "/dashboard" as any });
+                  } finally {
+                    setWarming(false);
+                  }
+                }}
+                aria-busy={warming}
+                className="inline-flex w-full sm:w-auto min-w-[220px] items-center justify-center rounded-md bg-primary px-8 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-60"
+              >
+                {warming ? "Opening dashboard…" : "Get started"}
+              </button>
+            </div>
+
+            <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="panel p-4">
+                <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground">Financial</div>
+                <div className="mt-1 text-sm text-foreground/90">Payback + savings scenarios</div>
+              </div>
+              <div className="panel p-4">
+                <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground">Geospatial</div>
+                <div className="mt-1 text-sm text-foreground/90">Hotspots by neighborhood</div>
+              </div>
+              <div className="panel p-4">
+                <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground">Climate</div>
+                <div className="mt-1 text-sm text-foreground/90">CO₂ avoided at scale</div>
+              </div>
             </div>
           </div>
-          <SummaryKpis
-            summary={summary}
-            loading={summaryLoading}
-            error={summaryError}
-          />
-        </header>
 
-        {/* Top: Map + Insight */}
-        <section className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-4 lg:items-stretch">
-          <MapView
-            zones={SAN_DIEGO_ZONES}
-            selectedId={selectedId}
-            onSelect={setSelectedId}
-            inputs={inputs}
-            regionRows={regionsPayload?.regions}
-          />
-          <InsightPanel
-            zone={zone}
-            inputs={inputs}
-            apiRegion={apiRegion}
-            datasetMedianPaybackYears={summary?.kpis.median_payback_years ?? null}
-            allRegions={regionsPayload?.regions ?? []}
-            summary={summary}
-            regionsLoading={regionsLoading}
-            regionsError={regionsError}
-            manifestGeneratedAt={manifest?.generated_at ?? null}
-            dataSourceLabel={viaApi ? "Lambda API" : "Static /public/processed/v1"}
-          />
-        </section>
+          <div className="panel p-5">
+            <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground">
+              What you’ll see inside
+            </div>
+            <ul className="mt-3 space-y-3 text-sm text-foreground/85">
+              <li className="flex gap-3">
+                <span className="mt-1 size-1.5 rounded-full bg-primary shrink-0" />
+                Interactive map to compare neighborhoods side-by-side
+              </li>
+              <li className="flex gap-3">
+                <span className="mt-1 size-1.5 rounded-full bg-primary shrink-0" />
+                What-if controls for system size, investment, and utility inflation
+              </li>
+              <li className="flex gap-3">
+                <span className="mt-1 size-1.5 rounded-full bg-primary shrink-0" />
+                Cost projection explorer (solar pathway vs grid-only)
+              </li>
+              <li className="flex gap-3">
+                <span className="mt-1 size-1.5 rounded-full bg-primary shrink-0" />
+                Environmental ROI metrics for reporting
+              </li>
+            </ul>
 
-        {/* Bottom bento */}
-        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <SavingsHero zone={zone} inputs={inputs} solarInsights={apiRegion?.solar_insights} />
-          <div className="md:col-span-2 lg:col-span-2 row-span-2">
-            <ProjectionChart zone={zone} inputs={inputs} solarInsights={apiRegion?.solar_insights} />
-          </div>
-          <EnvROI zone={zone} inputs={inputs} solarInsights={apiRegion?.solar_insights} />
-          <div className="md:col-span-2 lg:col-span-1 lg:col-start-1 lg:row-start-2">
-            <WhatIfPanel inputs={inputs} onChange={setInputs} />
-          </div>
-          <div className="lg:col-start-4 lg:row-start-2">
-            <DataFeedCard
-              viaApi={viaApi}
-              regionsLoading={regionsLoading}
-              regionsError={regionsError}
-              manifestGeneratedAt={manifest?.generated_at ?? null}
-            />
+            <div className="mt-5 rounded-xl border border-border/70 bg-card/40 p-4 text-xs text-muted-foreground leading-relaxed">
+              Tip: if you’re presenting to a city council or CFO, open a neighborhood with fast payback,
+              then tweak “Utility Price Increase” to show downside protection.
+            </div>
           </div>
         </section>
       </main>
-    </div>
-  );
-}
-
-function SummaryKpis({
-  summary,
-  loading,
-  error,
-}: {
-  summary: ReturnType<typeof useSolarSummary>["data"];
-  loading: boolean;
-  error: boolean;
-}) {
-  if (loading) {
-    return (
-      <div className="rounded-xl border border-border bg-card/50 px-4 py-3 text-xs text-muted-foreground">
-        Loading metrics…
-      </div>
-    );
-  }
-  if (error || !summary) {
-    return (
-      <div className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-xs text-destructive">
-        Could not load summary.json — check API URL or static files.
-      </div>
-    );
-  }
-  const k = summary.kpis;
-  return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4 text-left">
-      <Kpi
-        label="Installs (est.)"
-        value={k.total_estimated_installs.toLocaleString()}
-        glossaryKey="kpi-installs-est"
-      />
-      <Kpi label="Capacity" value={`${k.total_capacity_mw.toFixed(1)} MW`} glossaryKey="kpi-capacity-mw" />
-      <Kpi label="YoY growth" value={`+${k.yoy_growth_pct.toFixed(1)}%`} glossaryKey="kpi-yoy-growth" />
-      <Kpi
-        label="CO₂ avoided"
-        value={`${k.est_co2_avoided_kt_per_year.toFixed(0)} kt/yr`}
-        glossaryKey="kpi-co2-summary"
-      />
-    </div>
-  );
-}
-
-function Kpi({ label, value, glossaryKey }: { label: string; value: string; glossaryKey: MetricGlossaryKey }) {
-  return (
-    <MetricFlipCard
-      metricKey={glossaryKey}
-      className="rounded-xl border border-border bg-card/60 px-3 py-2"
-      front={
-        <>
-          <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">{label}</div>
-          <div className="text-sm font-semibold tabular-nums">{value}</div>
-        </>
-      }
-    />
-  );
-}
-
-function DataFeedCard({
-  viaApi,
-  regionsLoading,
-  regionsError,
-  manifestGeneratedAt,
-}: {
-  viaApi: boolean;
-  regionsLoading: boolean;
-  regionsError: boolean;
-  manifestGeneratedAt: string | null;
-}) {
-  const metricsStatus = regionsError ? "Error" : regionsLoading ? "Loading" : "Ready";
-  const metricsTone = regionsError ? "text-destructive" : regionsLoading ? "text-warn" : "text-solar";
-  const rows = [
-    { src: "Processed metrics (v1)", status: metricsStatus, tone: metricsTone },
-    { src: viaApi ? "API Gateway + Lambda" : "Static /public/processed", status: viaApi ? "API" : "Local", tone: "text-solar" },
-    { src: "Scripps Heat Map", status: "Model", tone: "text-warn" },
-    { src: "EIA Energy API", status: "Model", tone: "text-warn" },
-  ];
-  return (
-    <div className="panel p-5 h-full">
-      <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground">Data Feeds</div>
-      {manifestGeneratedAt && (
-        <div className="mt-2 text-[10px] font-mono text-muted-foreground leading-relaxed">
-          Snapshot UTC: {manifestGeneratedAt}
-        </div>
-      )}
-      <ul className="mt-3 space-y-2 text-sm">
-        {rows.map((r) => (
-          <li key={r.src} className="flex items-center justify-between gap-2">
-            <span className="text-foreground/80">{r.src}</span>
-            <span className={`text-xs font-mono uppercase tracking-wider shrink-0 ${r.tone}`}>{r.status}</span>
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }
