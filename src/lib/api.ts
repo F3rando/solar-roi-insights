@@ -27,7 +27,8 @@ export function manifestUrl(): string {
 }
 
 export async function fetchJson<T>(url: string): Promise<T> {
-  const res = await fetch(url);
+  /** Avoid stale dashboard numbers after S3/API updates (browser HTTP cache). */
+  const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) {
     throw new Error(`HTTP ${res.status} for ${url}`);
   }

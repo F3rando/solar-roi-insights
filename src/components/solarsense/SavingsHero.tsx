@@ -1,10 +1,19 @@
 import { MetricFlipCard } from "@/components/solarsense/MetricFlipCard";
 import type { Zone, Inputs } from "@/lib/solar";
+import type { SolarInsightsV1 } from "@/types/api";
 import { cumulativeSavings, projectedSavings, fmtUsd } from "@/lib/solar";
 
-export function SavingsHero({ zone, inputs }: { zone: Zone; inputs: Inputs }) {
-  const total = cumulativeSavings(zone, inputs);
-  const proj = projectedSavings(zone, inputs, 25);
+export function SavingsHero({
+  zone,
+  inputs,
+  solarInsights,
+}: {
+  zone: Zone;
+  inputs: Inputs;
+  solarInsights?: SolarInsightsV1 | null;
+}) {
+  const total = cumulativeSavings(zone, inputs, 25, solarInsights);
+  const proj = projectedSavings(zone, inputs, 25, solarInsights);
   const last = proj[proj.length - 1];
 
   return (

@@ -28,6 +28,14 @@ export type SummaryV1 = {
   disclaimer?: string;
 };
 
+/** Populated when ETL runs with GOOGLE_SOLAR_API_KEY (Google Solar Building Insights). */
+export type SolarInsightsV1 = {
+  max_sunshine_hours_per_year?: number;
+  carbon_offset_factor_kg_per_mwh?: number;
+  max_array_panels_count?: number;
+  imagery_quality?: string;
+};
+
 export type RegionRowV1 = {
   id: string;
   name: string;
@@ -36,6 +44,7 @@ export type RegionRowV1 = {
   yoy_growth_pct: number;
   median_est_annual_savings_usd: number;
   install_count_bucket: "high" | "medium" | "low";
+  solar_insights?: SolarInsightsV1;
 };
 
 export type RegionsResponseV1 = {

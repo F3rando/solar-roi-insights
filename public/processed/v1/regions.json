@@ -3,74 +3,146 @@
     {
       "id": "north-park",
       "name": "North Park",
-      "centroid": { "lat": 32.748, "lon": -117.130 },
-      "adoption_index": 0.72,
-      "yoy_growth_pct": 11.2,
-      "median_est_annual_savings_usd": 1840,
-      "install_count_bucket": "high"
+      "centroid": {
+        "lat": 32.748,
+        "lon": -117.13
+      },
+      "adoption_index": 0.785,
+      "yoy_growth_pct": 94.6,
+      "median_est_annual_savings_usd": 1670,
+      "install_count_bucket": "high",
+      "solar_insights": {
+        "max_sunshine_hours_per_year": 1812.0,
+        "carbon_offset_factor_kg_per_mwh": 428.9201,
+        "max_array_panels_count": 77,
+        "imagery_quality": "HIGH"
+      }
     },
     {
       "id": "la-jolla",
       "name": "La Jolla",
-      "centroid": { "lat": 32.832, "lon": -117.271 },
-      "adoption_index": 0.88,
-      "yoy_growth_pct": 9.4,
-      "median_est_annual_savings_usd": 2100,
-      "install_count_bucket": "high"
+      "centroid": {
+        "lat": 32.832,
+        "lon": -117.271
+      },
+      "adoption_index": 0.4734,
+      "yoy_growth_pct": 6.2,
+      "median_est_annual_savings_usd": 1852,
+      "install_count_bucket": "medium",
+      "solar_insights": {
+        "max_sunshine_hours_per_year": 1906.07,
+        "carbon_offset_factor_kg_per_mwh": 428.9201,
+        "max_array_panels_count": 97,
+        "imagery_quality": "HIGH"
+      }
     },
     {
       "id": "downtown",
       "name": "Downtown",
-      "centroid": { "lat": 32.715, "lon": -117.160 },
-      "adoption_index": 0.45,
-      "yoy_growth_pct": 18.7,
-      "median_est_annual_savings_usd": 1620,
-      "install_count_bucket": "medium"
+      "centroid": {
+        "lat": 32.715,
+        "lon": -117.16
+      },
+      "adoption_index": 0.2367,
+      "yoy_growth_pct": 209.1,
+      "median_est_annual_savings_usd": 1520,
+      "install_count_bucket": "low",
+      "solar_insights": {
+        "max_sunshine_hours_per_year": 1738.02,
+        "carbon_offset_factor_kg_per_mwh": 428.9201,
+        "max_array_panels_count": 141,
+        "imagery_quality": "HIGH"
+      }
     },
     {
       "id": "el-cajon",
       "name": "El Cajon",
-      "centroid": { "lat": 32.795, "lon": -116.962 },
-      "adoption_index": 0.61,
-      "yoy_growth_pct": 16.1,
-      "median_est_annual_savings_usd": 1950,
-      "install_count_bucket": "medium"
+      "centroid": {
+        "lat": 32.795,
+        "lon": -116.962
+      },
+      "adoption_index": 0.4758,
+      "yoy_growth_pct": 3700.0,
+      "median_est_annual_savings_usd": 1856,
+      "install_count_bucket": "high",
+      "solar_insights": {
+        "max_sunshine_hours_per_year": 1944.15,
+        "carbon_offset_factor_kg_per_mwh": 428.9201,
+        "max_array_panels_count": 116,
+        "imagery_quality": "HIGH"
+      }
     },
     {
       "id": "chula",
       "name": "Chula Vista",
-      "centroid": { "lat": 32.640, "lon": -117.084 },
-      "adoption_index": 0.55,
-      "yoy_growth_pct": 21.3,
-      "median_est_annual_savings_usd": 1780,
-      "install_count_bucket": "medium"
+      "centroid": {
+        "lat": 32.64,
+        "lon": -117.084
+      },
+      "adoption_index": 1.0,
+      "yoy_growth_pct": 94.0,
+      "median_est_annual_savings_usd": 1920,
+      "install_count_bucket": "high",
+      "solar_insights": {
+        "max_sunshine_hours_per_year": 1652.78,
+        "carbon_offset_factor_kg_per_mwh": 428.9201,
+        "max_array_panels_count": 3,
+        "imagery_quality": "HIGH"
+      }
     },
     {
       "id": "encinitas",
       "name": "Encinitas",
-      "centroid": { "lat": 33.037, "lon": -117.292 },
-      "adoption_index": 0.79,
-      "yoy_growth_pct": 7.8,
-      "median_est_annual_savings_usd": 1980,
-      "install_count_bucket": "high"
+      "centroid": {
+        "lat": 33.037,
+        "lon": -117.292
+      },
+      "adoption_index": 0.0242,
+      "yoy_growth_pct": 400.0,
+      "median_est_annual_savings_usd": 1500,
+      "install_count_bucket": "low",
+      "solar_insights": {
+        "max_sunshine_hours_per_year": 1843.71,
+        "carbon_offset_factor_kg_per_mwh": 428.9201,
+        "max_array_panels_count": 89,
+        "imagery_quality": "HIGH"
+      }
     },
     {
       "id": "mira-mesa",
       "name": "Mira Mesa",
-      "centroid": { "lat": 32.915, "lon": -117.138 },
-      "adoption_index": 0.68,
-      "yoy_growth_pct": 12.5,
-      "median_est_annual_savings_usd": 1890,
-      "install_count_bucket": "high"
+      "centroid": {
+        "lat": 32.915,
+        "lon": -117.138
+      },
+      "adoption_index": 0.9203,
+      "yoy_growth_pct": 78.4,
+      "median_est_annual_savings_usd": 1760,
+      "install_count_bucket": "high",
+      "solar_insights": {
+        "max_sunshine_hours_per_year": 2038.22,
+        "carbon_offset_factor_kg_per_mwh": 428.9201,
+        "max_array_panels_count": 38,
+        "imagery_quality": "HIGH"
+      }
     },
     {
       "id": "escondido",
       "name": "Escondido",
-      "centroid": { "lat": 33.119, "lon": -117.086 },
-      "adoption_index": 0.52,
-      "yoy_growth_pct": 19.0,
-      "median_est_annual_savings_usd": 2010,
-      "install_count_bucket": "medium"
+      "centroid": {
+        "lat": 33.119,
+        "lon": -117.086
+      },
+      "adoption_index": 0.4758,
+      "yoy_growth_pct": 942.9,
+      "median_est_annual_savings_usd": 1920,
+      "install_count_bucket": "high",
+      "solar_insights": {
+        "max_sunshine_hours_per_year": 1943.47,
+        "carbon_offset_factor_kg_per_mwh": 428.9201,
+        "max_array_panels_count": 84,
+        "imagery_quality": "HIGH"
+      }
     }
   ]
 }
