@@ -6,6 +6,7 @@ import { ProjectionChart } from "@/components/solarsense/ProjectionChart";
 import { WhatIfPanel } from "@/components/solarsense/WhatIfPanel";
 import { EnvROI } from "@/components/solarsense/EnvROI";
 import { SavingsHero } from "@/components/solarsense/SavingsHero";
+import { TopOpportunitiesCard } from "@/components/solarsense/TopOpportunitiesCard";
 import { SAN_DIEGO_ZONES, type Inputs } from "@/lib/solar";
 import { useSolarManifest, useSolarRegions, useSolarSummary } from "@/hooks/useSolarMetrics";
 import { useLambdaApi } from "@/lib/api";
@@ -104,8 +105,17 @@ function Dashboard() {
           <div className="md:col-span-2 lg:col-span-2 row-span-2">
             <ProjectionChart zone={zone} inputs={inputs} solarInsights={apiRegion?.solar_insights} />
           </div>
-          <div className="lg:col-start-4 lg:row-start-1 lg:row-span-2">
+          <div className="lg:col-start-4 lg:row-start-1 lg:row-span-2 flex flex-col gap-4">
             <EnvROI zone={zone} inputs={inputs} solarInsights={apiRegion?.solar_insights} />
+            <div className="flex-1 min-h-0">
+              <TopOpportunitiesCard
+                zones={SAN_DIEGO_ZONES}
+                inputs={inputs}
+                regionRows={regionsPayload?.regions}
+                selectedId={selectedId}
+                onSelect={setSelectedId}
+              />
+            </div>
           </div>
           <div className="md:col-span-2 lg:col-span-1 lg:col-start-1 lg:row-start-2">
             <WhatIfPanel inputs={inputs} onChange={setInputs} />
