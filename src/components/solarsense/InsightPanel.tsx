@@ -80,7 +80,7 @@ export function InsightPanel({
       )}
 
       {apiRegion?.solar_insights && (
-        <Card label="Google Solar (building near zone centroid)">
+        <Card label="Google Solar (building near zone centroid)" glossaryKey="insight-google-solar">
           <div className="grid grid-cols-2 gap-2 text-sm">
             {apiRegion.solar_insights.max_sunshine_hours_per_year != null && (
               <div>

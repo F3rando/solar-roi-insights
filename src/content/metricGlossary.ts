@@ -81,6 +81,14 @@ export const METRIC_GLOSSARY = {
       "These fields connect the BI aggregate to the neighborhood story on the right rail; they update when you regenerate processed JSON.",
     ],
   },
+  "insight-google-solar": {
+    title: "Google Solar (roof insights)",
+    source: "Google Solar API — building near zone centroid",
+    body: [
+      "Sunshine hours, estimated max panels, and carbon offset factors are derived from Google’s solar dataset for a representative rooftop near the zone centroid—not a site survey for a specific address.",
+      "Imagery quality and modeled fields update with your API or static bundle; use them as directional inputs alongside ZenPower adoption metrics.",
+    ],
+  },
   "savings-cumulative-25yr": {
     title: "Grid vs solar (25 years)",
     source: "Modeled cumulative costs",
