@@ -323,3 +323,60 @@
   font-weight: 600;
   text-shadow: 0 1px 2px oklch(0.08 0.03 265 / 0.88);
 }
+
+/*
+ * MapLibre: 2D / 3D toggle.
+ * Default `.maplibregl-ctrl-group button` is 29×29 `display:block` — clips text; must override.
+ */
+.maplibregl-ctrl-group button.maplibregl-ctrl-map-view-mode {
+  display: inline-flex !important;
+  width: auto !important;
+  height: auto !important;
+  min-height: 30px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 5px 10px 5px 8px !important;
+  color: #1f2937;
+  font: 600 11px/1.15 ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: 0.02em;
+}
+
+.maplibregl-ctrl-map-view-mode__text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  align-items: flex-start;
+  justify-content: center;
+  min-width: 0;
+}
+
+.maplibregl-ctrl-map-view-mode__icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+}
+
+.maplibregl-ctrl-map-view-mode__icon svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+}
+
+.maplibregl-ctrl-map-view-mode__label {
+  text-align: left;
+  line-height: 1.2;
+}
+
+.maplibregl-ctrl-map-view-mode__sub {
+  display: block;
+  max-width: 9.5rem;
+  font-size: 9px;
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: 0.01em;
+  color: #4b5563;
+}
