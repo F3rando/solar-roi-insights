@@ -14,7 +14,7 @@ SolarSense turns **neighborhood-level adoption and financial assumptions** into 
 
 ---
 
-## How to use (visitors)
+## How to use
 
 1. Open the **[live site](https://solar-roi-insights.vercel.app/)**.
 2. Use **Dashboard** to explore regions on the map, compare neighborhoods, and read headline metrics.
