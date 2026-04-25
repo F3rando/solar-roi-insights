@@ -10,7 +10,7 @@
 
 ## What it is
 
-SolarSense turns **neighborhood-level adoption and financial assumptions** into decision-ready insight: payback, long-term savings, CO₂ impact, and growth signals—so you can see **where solar wins fastest** and stress-test scenarios (system size, investment, utility inflation). The app pairs a **geospatial view** of regions with a **What-if** model and an optional **AI-generated executive narrative** powered by the Gemini API.
+SolarSense turns **neighborhood-level adoption and financial assumptions** into decision-ready insight: payback, long-term savings, CO₂ impact, and growth signals—so you can see **where solar wins fastest** and stress-test scenarios (system size, investment, utility inflation). The app pairs a **geospatial view** of regions with a **What-if** model and an optional **AI-generated executive narrative** powered by Gemini API.
 
 ---
 
@@ -27,9 +27,9 @@ SolarSense turns **neighborhood-level adoption and financial assumptions** into 
 
 ---
 
-## UI / UX
+## UI/UX Design
 
-- **Dashboard-first layout** — KPIs and actions above the fold; scannable for executives and public staff.
+- **Dashboard-first layout** — Key Performance Indices (KPIs) and actions above the fold; scannable for executives and public staff.
 - **Consistent design system** — Tailwind CSS + [Radix UI](https://www.radix-ui.com/) primitives for accessible dialogs, toggles, and layout; cohesive typography and color hierarchy.
 - **Map + panels** — Geospatial context alongside numeric detail so users never lose place between “where” and “how much.”
 - **What-if as a first-class control** — Sliders and inputs tie directly to the projection chart so changes feel immediate and explainable.
@@ -64,13 +64,13 @@ flowchart LR
     JSON["public/processed/v1/*.json"]
     NB --> VAL --> JSON
   end
-  subgraph AWS["AWS (optional production path)"]
+  subgraph AWS["AWS"]
     S3["S3: versioned JSON"]
     APIGW["API Gateway + Lambda"]
     S3 <--> APIGW
   end
-  subgraph GCP["Google Cloud (optional)"]
-    GSI["Solar Building Insights API (ETL)"]
+  subgraph GCP["Google Cloud"]
+    GSI["Google Solar Insights API (ETL)"]
   end
   JSON -->|aws s3 sync| S3
   GSI -.->|enrich regions| NB
@@ -151,9 +151,3 @@ npm run data:validate
 - `data/` — ETL notes, validation script, S3 publish script
 
 ---
-
-## License & team
-
-DataHacks 2026 project. Dataset and third-party terms apply to any public data and APIs (ZenPower, Google Solar, Gemini, map tiles) used in your pipeline.
-
-For questions or improvements, open an issue or PR in this repository.
